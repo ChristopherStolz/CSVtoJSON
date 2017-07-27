@@ -22,7 +22,6 @@ CSV to JSON converter
 	ie:
 	java CSVtoJSON myfile.csv output.json
 	
-<<<<<<< HEAD
 (4) Errors
 	Should you have an error, feel free to contact me with the nature of the error and any applicable error logs. error_log.txt should be generated if there is a mismatch of Array sizes. This is most commonly caused by unnaccounted for cases in a freeform text field which I am at the time of writing this still catching.
 	
@@ -38,7 +37,6 @@ CSV to JSON converter
 	- Continued work to improve handling of freeform text fields
 	- Additional error handling and logging allowing a recovery state
 	- Web hosted version with error logging to aide development (this will record the original records which cause errors as well)
-=======
+
 (4) Authors
 	Christopher Stolz - initial work
->>>>>>> 90de3b743bbcf403bc305f16cd00fc86d06f36ef
