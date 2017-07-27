@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.lang.StringBuilder;
+import java.lang.ArrayIndexOutOfBoundsException;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -17,9 +18,11 @@ public class CSVtoJSON{
 		
 		File inputFile = new File(args[0]); //initialize input file
 		File outputFile = new File(args[1]); //initialize output file
+		File errorFile = new File("error_log.txt"); //initialize an error logging file
 		
 		BufferedReader input = null; //BufferedReader to read input file
 		BufferedWriter output = null; //output writer
+		BufferedWriter error = null;
 		
 		String[] headers = null;
 		String[] item = null;
@@ -27,6 +30,7 @@ public class CSVtoJSON{
 			System.out.println("Initializing.");
 			input = new BufferedReader(new FileReader(inputFile)); //Initializes a buffered reader for input file
 			output = new BufferedWriter(new FileWriter(outputFile)); //Initializes buffered writer for output file/stream
+			error = new BufferedWriter(new FileWriter(errorFile));
 		}catch (IOException e){
 			// errors out on file not found
 			System.err.println(e.toString());
@@ -73,9 +77,24 @@ public class CSVtoJSON{
 				}
 				output.newLine();
 				output.flush();
-			} catch (IOException e) {
-				System.err.println(e);
+			} catch (IOException|ArrayIndexOutOfBoundsException ex) {
+				System.err.println(ex);
 				System.err.println("Output failure");
+				if (ex.getCause() instanceof ArrayIndexOutOfBoundsException){
+					/*
+					* For ArrayIndexOutOfBoundsExceptions we print to System.err
+					* and store to error_log.txt. This allows for local debugging and an error file to be sent in.
+					*/
+					System.err.println(item[0] + ": {\n");
+					error.write(item[0] + ": {");
+					error.newLine();
+					for (int i = 0; i < headers.length; i++){
+						System.err.println(headers[i] + " : " + item[i] + ",\n");
+						error.write(headers[i] + " : " + item[i]);
+						error.newLine();
+					}
+					error.flush();
+				}
 				System.exit(2);
 			} finally {
 			}
