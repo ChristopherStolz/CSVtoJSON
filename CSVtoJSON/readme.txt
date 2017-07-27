@@ -37,6 +37,3 @@ CSV to JSON converter
 	- Continued work to improve handling of freeform text fields
 	- Additional error handling and logging allowing a recovery state
 	- Web hosted version with error logging to aide development (this will record the original records which cause errors as well)
-
-(4) Authors
-	Christopher Stolz - initial work
