@@ -17,25 +17,69 @@ public class JSONOutput {
 		headers = null;
 	}
 	
-	public JSONOutput (Writer writer, String[] headers){
+	public JSONOutput (Writer writer, String[] header){
 		/*
 		*	Takes a writer of any type and initializes the buffered writer
 		*	The headers are initialized here to be reused for each field
 		*/ 
 		output = new BufferedWriter(writer);
-		this.headers = headers;
+		headers = new String[header.length];
+ 		for (int i = 0; i < headers.length; i++){
+			headers[i] = formatField(header[i]);
+		} 
 	}
 	
-	public boolean writefield () {
+	public boolean write (String[] record) throws IOException{
 		boolean success = false;
-		// Placeholder; logic to come.
+		for (int i = 0; i < record.length; i++){
+			record[i] = record[i].replace("\'", "");
+			record[i] = this.formatField(record[i]);
+		}
+		output.write("\"" + record[0].substring(0, record[0].length() - 1) + "\"" + ": {");
+		output.newLine();
+		for (int i = 0; i < headers.length; i++){
+			//record[i] = this.formatField(record[i]);
+			output.write(headers[i]);
+			output.write(" : ");
+			output.write(record[i]);
+			if (i < headers.length - 1) this.writeSeparator();
+		}
+		output.write("}");
+		output.newLine();
+		output.flush();
+		success = true;
 		return success;
+	}
+	
+	public boolean writeSeparator() throws IOException{
+		boolean success = false;
+		output.write(",");
+		output.newLine();
+		output.flush();
+		success = true;
+		return success;
+	}
+	
+	public boolean writeStart() throws IOException{
+		output.write("{");
+		output.newLine();
+		output.flush();
+		return true;
+	}
+	
+	public boolean writeEnd() throws IOException{
+		output.write("}");
+		output.flush();
+		return true;
 	}
 	
 	private String formatField (String incomingField) {
 		StringBuilder field = new StringBuilder(incomingField);
 			if (field.charAt(field.length() - 1) == ',') {
 				field.setLength(field.length() - 1); //removes trailing commas left from input
+			}
+			if (field.length() == 0){
+				return "null";
 			}
 			if (field.charAt(0) == '"') {
 				/*
@@ -45,32 +89,39 @@ public class JSONOutput {
 				*	Escape characters still need to be dealt with at this point (Doubled double quotes should be \")
 				*/
 				field = new StringBuilder(field.substring(1, field.length() - 1));
-				if(field.indexOf("\"\"") != -1) {
-					//call to escape subroutine
-				}
+				field = new StringBuilder(this.stringHelper(field));
 			}
 			if (field.charAt(0) == '[' && 
 				field.charAt(field.length() - 1) == ']') {
 				/*
 				*	Checks if the contained information is an Array.
 				*/
-				field = this.arrayHelper(new StringBuilder(field.substring(1, field.length() - 1))); //outer brackets removed for processing
+				field = new StringBuilder(this.arrayHelper(new StringBuilder(field.substring(
+											1, field.length() - 1)))); //outer brackets removed for processing
 			} else if (field.charAt(0) == '{' &&
 				field.charAt(field.length() -1) == '}') {
 				/*
 				*	Checks if the contained information is an object
 				*/
-				field = this.objectHelper(field);
+				//field = this.objectHelper(field);
 			}
-		return field.toString();
+			incomingField = field.toString();
+			if (incomingField.matches("[0-9]+") || ((incomingField.charAt(0) == '[' || incomingField.charAt(0) == '{') &&
+														incomingField.charAt(incomingField.length() - 1) == ']' ||
+														incomingField.charAt(incomingField.length() - 1) == '}')) {
+				return incomingField;
+			} else {
+				incomingField = "\"" + incomingField + "\"";
+				return incomingField;
+			}
 	}
 	
-	private StringBuilder arrayHelper(StringBuilder value){
-		StringBuilder returnVal = new StringBuilder("");
+	private String arrayHelper(StringBuilder value){
+		String returnVal = new String("");
 		ArrayList<StringBuilder> helper = new ArrayList<StringBuilder>();
-		if (value.equals(returnVal)){
+		if (value.toString().equals(returnVal)){
 			// Empty arrays return just square braces back
-			returnVal.append("[]");
+			returnVal = returnVal + "[]";
 		} else {
 			
 			/*
@@ -83,8 +134,8 @@ public class JSONOutput {
 			int curlyClose = 0;
 			int squareOpen = 0;
 			int squareClose = 0;
-			
-			for (int i = 0; i < returnVal.length(); i++){
+			int prevIndex = 0;
+			for (int i = 0; i < value.length(); i++){
 				if (value.charAt(i) == '"') {
 					quotes++;
 				} 
@@ -99,20 +150,33 @@ public class JSONOutput {
 						squareClose++;
 					}
 					if (curlyOpen == curlyClose && squareOpen == squareClose) {
-						if (returnVal.charAt(i) == ','){
-							helper.add(new StringBuilder(returnVal.substring(i)));
-							returnVal = new StringBuilder(returnVal.substring(i, returnVal.length()));
+						if (value.charAt(i) == ','){
+							/*
+							*	Breaks the field on commas which are not inside another element
+							*/
+							helper.add(new StringBuilder(value.substring(prevIndex, i)));
+							prevIndex = i + 1;
 						}
 					}
 				}
 			} //end loop
+			helper.add(new StringBuilder(value.substring(prevIndex, value.length())));
+		}
+		returnVal = "[";
+		for (int i = 0; i < helper.size(); i++) {
+			/*
+			*	Deals with nested elements by calling the parent function on each field;
+			*	Should handle internal string parsing, as well as object and array parsing
+			*/
+			helper.set(i, new StringBuilder(this.formatField(helper.get(i).toString())));
+			if (i == 0) {
+				returnVal = returnVal + helper.get(i).toString();
+			} else {
+				returnVal = returnVal + " , " + helper.get(i).toString();
+			}
 			
 		}
-		
-		/*
-		*	TODO: Handle nested elements
-		*		  Handle element formatting
-		*/
+		returnVal = returnVal + "]";
 		
 		return returnVal;
 	}
@@ -122,17 +186,10 @@ public class JSONOutput {
 		return null;
 	}
 	
-	private StringBuilder formatField(StringBuilder value) {
-		//paceholder, program logic to come
-		return null;
-	}
-	
-	private StringBuilder doubleQuoteRemoval(StringBuilder value) {
-		for (int i = 0; i < value.length(); i++){
-			if(value.charAt(i) == '"' ){
-				
-			}
-		}
-		return null;
+	private String stringHelper(StringBuilder value) {
+		String helper = value.toString();
+		helper = helper.replaceAll("[\\n]", "\\\\n");
+		helper = helper.replace("\"\"", "\\\"");
+		return helper;
 	}
 }
