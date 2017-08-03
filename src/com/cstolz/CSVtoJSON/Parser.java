@@ -56,7 +56,6 @@ public class Parser{
 						* records are terminated with \n in this file
 						* if it is inside of quotes it should be ignored
 						*/
-						helper = input.read();
 						break;
 					} else {
 						stringHelper.append((char)helper);
@@ -71,6 +70,3 @@ public class Parser{
 		return returnVal;
 	}
 }
-
-
-

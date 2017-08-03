@@ -7,10 +7,21 @@ import java.io.OutputStreamWriter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-public class TestMain {
+public class CSVConverter{
+	/*
+	*	CSV to JSON converter
+	*	Written by Christopher Stolz
+	*	7/10/2017
+	*/
 	public static void main (String[] args) {
 		
-		File inputFile = new File(args[0]);
+		/*
+		*	Presently hooked up to files
+		*	The Parser and JSONOutput classes will accept any type of stream
+		*	This should require minimal changes (change the FileInputStream & FileOutputStream
+		*	to your desired type and adjust the arguments accordingly)
+		*	Lines 25, 26, 33, and 36 would need to be changed.
+		*/
 		FileInputStream inStream = null;
 		OutputStreamWriter outStream = null;
 		Parser myParser = null;
@@ -18,10 +29,11 @@ public class TestMain {
 		String[] x = null;
 		
 		try {
-			inStream = new FileInputStream(inputFile);
+			System.out.println("Initializing streams.");
+			inStream = new FileInputStream(new File(args[0]));
 			myParser = new Parser (inStream);
 			x = myParser.readRecord();
-			outStream = new OutputStreamWriter(new FileOutputStream(new File("output.txt")));
+			outStream = new OutputStreamWriter(new FileOutputStream(new File(args[1])));
 			output = new JSONOutput (outStream, x);
 		} catch (IOException e) {
 			System.err.println(e.toString());
@@ -30,6 +42,7 @@ public class TestMain {
 		}
 		
 		try {
+			System.out.println("Parsing records, this could take a few minutes.");
  			int count = 0;
 			output.writeStart();
 			 while (true) {
@@ -47,10 +60,6 @@ public class TestMain {
 			}
 			output.writeEnd();
 			System.out.println("Success! " + count + " objects read.");
-
-			// for(int i = 0; i < x.length; i++){
-				// System.out.println(x[i]);
-			// }
 		} catch (IOException e) {
 			System.err.println(e.toString());
 			System.exit(-1);

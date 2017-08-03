@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Class-Path: .
+Main-Class: com.cstolz.CSVtoJSON.CSVConverter
+Name: com/cstolz/CSVtoJSON
+Sealed: true
